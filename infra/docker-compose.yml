@@ -1,14 +1,28 @@
 version: '3.3'
 services:
 
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    volumes:
+      - ../backend:/app
+
   frontend:
+    depends_on:
+      - backend
     build:
       context: ../frontend
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
+  
+
   nginx:
     image: nginx:1.19.3
+    depends_on:
+      - backend
     ports:
       - "80:80"
     volumes:
