@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 
-class User(AbstractUser):
+class FoodgramUser(AbstractUser):
     username = models.CharField(
         max_length=150,
         unique=True,
@@ -16,12 +16,12 @@ class User(AbstractUser):
 
 class Subscribe(models.Model):
     user = models.ForeignKey(
-        User,
+        FoodgramUser,
         on_delete=models.CASCADE,
         related_name='follower',
     )
     author = models.ForeignKey(
-        User,
+        FoodgramUser,
         on_delete=models.CASCADE,
         related_name='following',
     )
