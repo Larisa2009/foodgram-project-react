@@ -12,6 +12,4 @@ WORKDIR /app/foodgram
 
 RUN python manage.py makemigrations users
 
-RUN python manage.py migrate
-
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "foodgram.wsgi"]

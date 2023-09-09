@@ -374,7 +374,7 @@ paths:
           $ref: '#/components/responses/AuthenticationError'
       tags:
         - Избранное
-  /api/recipes/{id}/shopping_cart/:
+  /api/recipes/{id}/cart/:
     post:
       operationId: Добавить рецепт в список покупок
       description: 'Доступно только авторизованным пользователям'
@@ -812,7 +812,7 @@ components:
           description: 'Список ингредиентов'
           type: array
           items:
-            $ref: '#/components/schemas/IngredientInRecipe'
+            $ref: '#/components/schemas/RecipeIngredient'
         is_favorited:
           type: boolean
           description: 'Находится ли в избранном'
@@ -881,7 +881,7 @@ components:
       required:
         - name
         - measurement_unit
-    IngredientInRecipe:
+    RecipeIngredient:
       type: object
       properties:
         id:

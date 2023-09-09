@@ -2,19 +2,24 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
 from djoser.views import UserViewSet
+from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
+from recipes.models import Recipe, Favorite, RecipeIngredient, Cart
+from django.http import HttpResponse
 
 
 from .serializers import (
+    CartSerializer,
+    RecipeListSerializer,
     SubscribeSerializer,
     SubscriptionsSerializer,
     UserGetSerializer,
     UserPostSerializer
 )
+from .serializers import FavoriteSerializer
 from users.models import Subscribe, FoodgramUser
 from .permissions import IsAuthorOnly
 
@@ -35,8 +40,10 @@ class CustomUserViewSet(UserViewSet):
     @action(detail=False, methods=['post'],
             permission_classes=(IsAuthenticated,))
     def set_password(self, request):
-        serializer = SetPasswordSerializer(data=request.data,
-                                           context={'request': request})
+        serializer = SetPasswordSerializer(
+            data=request.data,
+            context={'request': request}
+        )
         serializer.is_valid(raise_exception=True)
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -48,15 +55,21 @@ class CustomUserViewSet(UserViewSet):
         user = request.user
         if request.method == 'POST':
             serializer = SubscribeSerializer(
-                data={'user': user.id, 'author': author.id},
-                context={"request": request})
+                data={
+                    'user': user.id,
+                    'author': author.id
+                },
+                context={
+                    'request': request
+                }
+            )
             serializer.is_valid(raise_exception=True)
             Subscribe.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         subscribe = Subscribe.objects.filter(user=user, author=author)
         if not subscribe:
-            return Response({'errors': 'Подписки на этого автора нет!'},
+            return Response({'errors': 'Вы не подписаны на данного автора'},
                             status=status.HTTP_400_BAD_REQUEST)
         subscribe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -64,11 +77,98 @@ class CustomUserViewSet(UserViewSet):
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthorOnly])
     def subscriptions(self, request):
-        """Метод получения всех подписок."""
         queryset = FoodgramUser.objects.filter(following__user=request.user)
         page = self.paginate_queryset(queryset)
         serializer = SubscriptionsSerializer(
-            page, many=True, context={'request': request})
+            page,
+            many=True,
+            context={'request': request}
+        )
         return self.get_paginated_response(serializer.data)
 
 
+class RecipeViewSet(ModelViewSet):
+    queryset = Recipe.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    serializer_class = RecipeListSerializer
+
+
+    @action(detail=True, methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
+    def favorite(self, request, **kwargs):
+        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
+        if request.method == 'POST':
+            serializer = FavoriteSerializer(
+                data={
+                    'user': request.user.id,
+                    'recipe': recipe.id
+                }  
+            )
+            serializer.is_valid(raise_exception=True)
+            Favorite.objects.create(user=request.user, recipe=recipe)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+
+        favorite = Favorite.objects.filter(
+            user=request.user.id,
+            recipe=recipe.id
+        )
+        if not favorite:
+            return Response(
+                {'errors': 'Рецепт отсутствует в избранном'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['get'],
+            permission_classes=[IsAuthorOnly])
+    def download_shopping_cart(self, request):
+        items = RecipeIngredient.objects.select_related(
+            'recipe', 'ingredient'
+        )
+        items = items.filter(recipe__shopping_carts__user=request.user).all()
+        cart = items.values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(
+            name='ingredient__name',
+            units='ingredient__measurement_unit',
+            total=sum('amount')
+        )
+        response = HttpResponse(cart)
+        return response
+
+    @action(detail=True, methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
+    def cart(self, request, **kwargs):
+        recipe = get_object_or_404(Recipe, id=kwargs['pk'])
+        if request.method == 'POST':
+            serializer = CartSerializer(
+                data={
+                    'user': request.user.id,
+                    'recipe': recipe.id
+                },
+                context={
+                    'request': request
+                }
+            )
+            serializer.is_valid(raise_exception=True)
+            Cart.objects.create(user=request.user, recipe=recipe)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        cart = Cart.objects.filter(
+            recipe=recipe.id,
+            user=request.user.id
+        )
+        if not cart:
+            return Response(
+                {'errors': 'Рецепт отсутствует в списке покупок'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        cart.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
