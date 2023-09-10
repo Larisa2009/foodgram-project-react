@@ -1,6 +1,7 @@
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
-
+from recipes.models import Ingredient
+from drf_base64.fields import Base64ImageField
 from recipes.models import Recipe, Favorite, Cart, RecipeIngredient, Tag
 
 from users.models import Subscribe, FoodgramUser
@@ -202,3 +203,32 @@ class RecipeListSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             recipe=obj
         ).exists()
+    
+
+class IngredientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Ingredient
+
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    author = UserGetSerializer(read_only=True)
+    image = Base64ImageField()
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all()
+    )
+
+    class Meta:
+        model = Recipe
+        exclude = ('pub_date',)
+
+    def create(self, validated_data):
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(
+            **validated_data,
+            author=self.context['request'].user
+        )
+        recipe.tags.set(tags)
+        return recipe

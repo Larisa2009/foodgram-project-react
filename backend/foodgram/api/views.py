@@ -2,21 +2,21 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
 from djoser.views import UserViewSet
-from rest_framework.viewsets import ModelViewSet
-from rest_framework import status
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework import status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from recipes.models import Ingredient, Tag
 from recipes.models import Recipe, Favorite, RecipeIngredient, Cart
 from django.http import HttpResponse
 
 
 from .serializers import (
-    CartSerializer,
-    RecipeListSerializer,
-    SubscribeSerializer,
-    SubscriptionsSerializer,
-    UserGetSerializer,
+    CartSerializer, IngredientSerializer,
+    RecipeCreateSerializer, RecipeListSerializer,
+    SubscribeSerializer, SubscriptionsSerializer,
+    TagSerializer, UserGetSerializer,
     UserPostSerializer
 )
 from .serializers import FavoriteSerializer
@@ -27,7 +27,7 @@ from .permissions import IsAuthorOnly
 class CustomUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
     search_fields = ('username', 'email')
     lookup_fields = ('name', 'id')
     http_method_names = ['get', 'post', 'delete']
@@ -36,6 +36,17 @@ class CustomUserViewSet(UserViewSet):
         if self.action in ('list', 'retrieve'):
             return UserGetSerializer
         return UserPostSerializer
+
+    # @action(detail=True, methods=['get'],
+    #         permission_classes=(IsAuthenticated,))
+    # def me(self, request):
+    #     serializer = UserGetSerializer(
+    #         data=request.data
+    #     )
+    #     serializer.is_valid(raise_exception=True)
+    #     user = FoodgramUser.objects.get(serializer.data)
+    #     return Response(user)
+
 
     @action(detail=False, methods=['post'],
             permission_classes=(IsAuthenticated,))
@@ -91,7 +102,12 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
-    serializer_class = RecipeListSerializer
+    
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return RecipeListSerializer
+        return RecipeCreateSerializer
 
 
     @action(detail=True, methods=['post', 'delete'],
@@ -144,7 +160,7 @@ class RecipeViewSet(ModelViewSet):
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
-    def cart(self, request, **kwargs):
+    def shopping_cart(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         if request.method == 'POST':
             serializer = CartSerializer(
@@ -172,3 +188,21 @@ class RecipeViewSet(ModelViewSet):
         cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+
+class IngredientViewSet(mixins.ListModelMixin,
+                        mixins.RetrieveModelMixin,
+                        GenericViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    permission_classes = (AllowAny,)
+    pagination_class = None
+    search_fields = ('name',)
+
+
+class TagViewSet(mixins.ListModelMixin,
+                 mixins.RetrieveModelMixin,
+                 GenericViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = (AllowAny,)
+    pagination_class = None

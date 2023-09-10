@@ -8,7 +8,8 @@ class FoodgramUser(AbstractUser):
         max_length=150,
         unique=True,
     )
-
+    
+    USERNAME_FIELD = "username"
 
     def __str__(self):
         return self.username
