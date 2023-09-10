@@ -128,7 +128,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         instance = instance['recipe']
         return RecipeSimpleSerializer(instance, context=self.context).data
-    
+
 
 class CartSerializer(serializers.ModelSerializer):
 
@@ -147,7 +147,7 @@ class CartSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         instance = instance['recipe']
         return RecipeSimpleSerializer(instance).data
-    
+
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='ingredient.id')
@@ -170,7 +170,6 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Tag
-
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
@@ -203,7 +202,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             recipe=obj
         ).exists()
-    
+
 
 class IngredientSerializer(serializers.ModelSerializer):
 

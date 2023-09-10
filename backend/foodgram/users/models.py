@@ -2,13 +2,12 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
-
 class FoodgramUser(AbstractUser):
     username = models.CharField(
         max_length=150,
         unique=True,
     )
-    
+
     USERNAME_FIELD = "username"
 
     def __str__(self):
@@ -26,7 +25,6 @@ class Subscribe(models.Model):
         on_delete=models.CASCADE,
         related_name='following',
     )
-
 
     def __str__(self):
         return f'{self.user.username} - {self.author.username}'

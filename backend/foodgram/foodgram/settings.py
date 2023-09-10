@@ -82,7 +82,6 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -128,7 +127,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 
-
 STATIC_URL = '/static/'
 
 STATIC_ROOT = '/static/'
@@ -136,8 +134,6 @@ STATIC_ROOT = '/static/'
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = BASE_DIR / 'media'
-
-
 
 
 # Default primary key field type
@@ -148,7 +144,7 @@ AUTH_USER_MODEL = 'users.FoodgramUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated', 
+        'rest_framework.permissions.IsAuthenticated',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [

@@ -47,7 +47,6 @@ class CustomUserViewSet(UserViewSet):
     #     user = FoodgramUser.objects.get(serializer.data)
     #     return Response(user)
 
-
     @action(detail=False, methods=['post'],
             permission_classes=(IsAuthenticated,))
     def set_password(self, request):
@@ -102,13 +101,11 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
-    
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeListSerializer
         return RecipeCreateSerializer
-
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
@@ -119,7 +116,7 @@ class RecipeViewSet(ModelViewSet):
                 data={
                     'user': request.user.id,
                     'recipe': recipe.id
-                }  
+                }
             )
             serializer.is_valid(raise_exception=True)
             Favorite.objects.create(user=request.user, recipe=recipe)
@@ -187,7 +184,7 @@ class RecipeViewSet(ModelViewSet):
             )
         cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
 
 class IngredientViewSet(mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,

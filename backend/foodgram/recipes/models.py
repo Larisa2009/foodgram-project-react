@@ -70,9 +70,6 @@ class Recipe(models.Model):
     )
 
 
-
-
-
 class Favorite(models.Model):
     user = models.ForeignKey(
         FoodgramUser,
@@ -97,6 +94,7 @@ class Favorite(models.Model):
             )
         ]
 
+
 class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
@@ -119,6 +117,7 @@ class RecipeIngredient(models.Model):
         verbose_name='Рецепт'
 
     )
+
 
 class Cart(models.Model):
     user = models.ForeignKey(
