@@ -193,7 +193,7 @@ class IngredientViewSet(mixins.ListModelMixin,
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
-    search_fields = ('name',)
+    search_fields = ('^name',)
 
 
 class TagViewSet(mixins.ListModelMixin,

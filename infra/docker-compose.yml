@@ -17,12 +17,12 @@ services:
   
   backend:
     restart: always
-    
     build:
       context: ../backend
       dockerfile: Dockerfile
     depends_on:
-      - db  
+      - nginx
+      - db
     volumes:
       - static:/static
       - media:/app/media
@@ -40,7 +40,7 @@ services:
     build:
       dockerfile: Dockerfile
     depends_on:
-      - backend
+      - db
     ports:
       - "80:80"
     volumes:
