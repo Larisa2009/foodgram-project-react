@@ -10,6 +10,6 @@ COPY . .
 
 WORKDIR /app/foodgram
 
-RUN python manage.py makemigrations
+RUN python manage.py makemigrations users
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "foodgram.wsgi"]
