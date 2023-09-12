@@ -24,16 +24,16 @@ services:
       - nginx
       - db
     volumes:
-      - static:/static
-      - media:/media
+      - static:/app/foodgram/static
+      - media:/app/foodgram/media
 
   frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    command: cp -r /app/build/. /static/
+    command: cp -r /app/build/. /app/foodgram/static/
     volumes:
-      - static:/static
+      - static:/app/foodgram/static
   
 
   nginx:
