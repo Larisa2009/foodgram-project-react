@@ -211,7 +211,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
 
 
-
 class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
 
@@ -233,14 +232,13 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         )
         recipe_ingredient.amount = validated_data.get('amount')
         recipe_ingredient.save()
-    
+
     def validate_amount(self, amount):
         if not amount:
             raise serializers.ValidationError(
                 'Необходимо задать количество продукта'
             )
         return amount
-
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -293,7 +291,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         if tags:
             recipe.tags.set(tags)
         return recipe
-    
+
     def validate_ingredients(self, ingredients):
         if not ingredients:
             raise serializers.ValidationError(
@@ -305,8 +303,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     'Необходимо выбрать ингредиент из списка'
                 )
         return ingredients
-
-    
 
     def validate_cooking_time(self, cooking_time):
         if not cooking_time:

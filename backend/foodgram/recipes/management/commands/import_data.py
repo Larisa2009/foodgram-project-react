@@ -16,4 +16,3 @@ class Command(BaseCommand):
             Tag.objects.bulk_create(
                 Tag(**x) for x in tags)
         self.stdout.write('Данные загружены')
-# python manage.py import_data
