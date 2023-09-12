@@ -2,6 +2,7 @@ version: '3.3'
 
 volumes:
   static:
+  backend_static:
   media:
   pg:
 
@@ -20,19 +21,20 @@ services:
     build:
       context: ../backend
       dockerfile: Dockerfile
+    # command: cp -r /app/foodgram/static/. /static/
     depends_on:
       - db
     volumes:
-      - static:/app/foodgram/static
-      - media:/app/foodgram/media
+      - backend_static:/app/foodgram/static/
+      - media:/media/
 
   frontend:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    command: cp -r /app/build/. /app/foodgram/static/
+    # command: cp -r /app/build/. /static/
     volumes:
-      - static:/app/foodgram/static
+      - static:/app/build/
   
 
   nginx:
@@ -47,5 +49,6 @@ services:
       # - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
-      - static:/static
-      - media:/media
+      - static:/static/
+      - backend_static:/backend_static/
+      - media:/media/
