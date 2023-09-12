@@ -12,6 +12,8 @@ WORKDIR /app/foodgram
 
 RUN python manage.py makemigrations users
 
+RUN python manage.py makemigrations recipes
+
 RUN python manage.py collectstatic --no-input
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "foodgram.wsgi"]

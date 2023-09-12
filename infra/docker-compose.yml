@@ -26,7 +26,7 @@ services:
       - db
     volumes:
       - backend_static:/app/foodgram/static/
-      - media:/media/
+      - media:/app/foodgram/media/
 
   frontend:
     build:

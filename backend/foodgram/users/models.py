@@ -5,10 +5,21 @@ from django.contrib.auth.models import AbstractUser
 class FoodgramUser(AbstractUser):
     username = models.CharField(
         max_length=150,
-        unique=True,
+        unique=True
+    )
+    name = models.CharField(
+        max_length=150,
+    )
+    lastname = models.CharField(
+        max_length=150,
+    )
+    email = models.EmailField(
+        max_length=150,
+        unique=True
     )
 
-    USERNAME_FIELD = "username"
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['name', 'lastname', 'email']
 
     def __str__(self):
         return self.username

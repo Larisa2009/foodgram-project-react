@@ -5,11 +5,11 @@ from djoser.views import UserViewSet
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework import status, mixins
 from rest_framework.decorators import action
+from django.db.models import Sum
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from recipes.models import Ingredient, Tag
 from recipes.models import Recipe, Favorite, RecipeIngredient, Cart
-from django.http import HttpResponse
 
 
 from .serializers import (
@@ -36,16 +36,6 @@ class CustomUserViewSet(UserViewSet):
         if self.action in ('list', 'retrieve'):
             return UserGetSerializer
         return UserPostSerializer
-
-    # @action(detail=True, methods=['get'],
-    #         permission_classes=(IsAuthenticated,))
-    # def me(self, request):
-    #     serializer = UserGetSerializer(
-    #         data=request.data
-    #     )
-    #     serializer.is_valid(raise_exception=True)
-    #     user = FoodgramUser.objects.get(serializer.data)
-    #     return Response(user)
 
     @action(detail=False, methods=['post'],
             permission_classes=(IsAuthenticated,))
@@ -148,11 +138,15 @@ class RecipeViewSet(ModelViewSet):
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(
-            name='ingredient__name',
-            units='ingredient__measurement_unit',
-            total=sum('amount')
+            total=Sum('amount')
         )
-        response = HttpResponse(cart)
+        items_list = []
+        for item in cart:
+            items_list.append(
+                f"{item['ingredient__name']} - "
+                f"{item['total']} {item['ingredient__measurement_unit']}"
+            )
+        response = Response('\n'.join(items_list))
         return response
 
     @action(detail=True, methods=['post', 'delete'],
