@@ -61,6 +61,6 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 
 @admin.register(Cart)
-class ShoppingCartAdmin(admin.ModelAdmin):
+class CartAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     list_editable = ('user', 'recipe')
