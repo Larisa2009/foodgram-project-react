@@ -21,7 +21,6 @@ services:
       context: ../backend
       dockerfile: Dockerfile
     depends_on:
-      - nginx
       - db
     volumes:
       - static:/app/foodgram/static
@@ -40,6 +39,7 @@ services:
     build:
       dockerfile: Dockerfile
     depends_on:
+      - backend
       - db
     ports:
       - "80:80"
