@@ -3,11 +3,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
 from djoser.views import UserViewSet
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework import status, mixins
+from rest_framework import status, mixins, filters
 from rest_framework.decorators import action
 from django.db.models import Sum
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.pagination import PageNumberPagination
 from recipes.models import Ingredient, Tag
 from recipes.models import Recipe, Favorite, RecipeIngredient, Cart
 
@@ -22,15 +23,17 @@ from .serializers import (
 from .serializers import FavoriteSerializer
 from users.models import Subscribe, FoodgramUser
 from .permissions import IsAuthorOnly
+from .filters import RecipeFilter, IngredientFilter
 
 
 class CustomUserViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     search_fields = ('username', 'email')
     lookup_fields = ('name', 'id')
     http_method_names = ['get', 'post', 'delete']
+    pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -91,6 +94,8 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
+    pagination_class = PageNumberPagination
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -188,6 +193,8 @@ class IngredientViewSet(mixins.ListModelMixin,
     permission_classes = (AllowAny,)
     pagination_class = None
     search_fields = ('^name',)
+    filter_backends = (filters.SearchFilter,)
+    filterset_class = IngredientFilter
 
 
 class TagViewSet(mixins.ListModelMixin,
