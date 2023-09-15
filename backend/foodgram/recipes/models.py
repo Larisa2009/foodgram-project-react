@@ -53,6 +53,7 @@ class Recipe(models.Model):
         through='RecipeIngredient',
         through_fields=('recipe', 'ingredient'),
         verbose_name='ингредиенты',
+        related_name='recipe',
     )
     image = models.ImageField(upload_to='media')
     text = models.TextField(verbose_name='Описание')

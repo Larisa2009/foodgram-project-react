@@ -9,6 +9,7 @@ from django.db.models import Sum
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
+from .paginators import FoodPaginator
 from recipes.models import Ingredient, Tag
 from recipes.models import Recipe, Favorite, RecipeIngredient, Cart
 
@@ -52,7 +53,7 @@ class CustomUserViewSet(UserViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+            permission_classes=(IsAuthenticated,))
     def subscribe(self, request, **kwargs):
         author = get_object_or_404(FoodgramUser, id=kwargs['id'])
         user = request.user
@@ -72,8 +73,10 @@ class CustomUserViewSet(UserViewSet):
 
         subscribe = Subscribe.objects.filter(user=user, author=author)
         if not subscribe:
-            return Response({'errors': 'Вы не подписаны на данного автора'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'errors': 'Вы не подписаны на данного пользователя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         subscribe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -94,7 +97,8 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     http_method_names = ['get', 'post', 'patch', 'delete']
-    pagination_class = PageNumberPagination
+    pagination_class = FoodPaginator
+    permission_classes = (AllowAny, )
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
@@ -103,7 +107,7 @@ class RecipeViewSet(ModelViewSet):
         return RecipeCreateSerializer
 
     @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+            permission_classes=[IsAuthenticated, ])
     def favorite(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         if request.method == 'POST':
@@ -155,7 +159,7 @@ class RecipeViewSet(ModelViewSet):
         return response
 
     @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+            permission_classes=[IsAuthorOnly])
     def shopping_cart(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         if request.method == 'POST':
