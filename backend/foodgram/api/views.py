@@ -23,7 +23,7 @@ from .serializers import (
 )
 from .serializers import FavoriteSerializer
 from users.models import Subscribe, FoodgramUser
-from .permissions import IsAuthorOnly
+from .permissions import IsAuthorOnly, IsAuthorOrReadOnly
 from .filters import RecipeFilter, IngredientFilter
 
 
@@ -137,7 +137,7 @@ class RecipeViewSet(ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['get'],
-            permission_classes=[IsAuthorOnly])
+            permission_classes=[IsAuthorOrReadOnly])
     def download_shopping_cart(self, request):
         items = RecipeIngredient.objects.select_related(
             'recipe', 'ingredient'
@@ -159,7 +159,7 @@ class RecipeViewSet(ModelViewSet):
         return response
 
     @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthorOnly])
+            permission_classes=[IsAuthorOrReadOnly])
     def shopping_cart(self, request, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['pk'])
         if request.method == 'POST':
