@@ -14,5 +14,8 @@ class UserAdmin(UserAdmin):
         'first_name',
         'last_name',
         'email',
+        'following',
+        'recipes'
     )
     search_fields = ('username', 'email')
+    list_filter = ('username', 'email')

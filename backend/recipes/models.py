@@ -1,8 +1,12 @@
 from colorfield.fields import ColorField
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from users.models import FoodgramUser
+from recipes.validators import validate_slug
+
+
+FoodgramUser = get_user_model()
 
 
 class Ingredient(models.Model):
@@ -15,6 +19,20 @@ class Ingredient(models.Model):
         verbose_name='Единица измерения'
     )
 
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredient'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.name}, {self.measurement_unit}'
+
 
 class Tag(models.Model):
     name = models.CharField(
@@ -25,7 +43,8 @@ class Tag(models.Model):
     slug = models.SlugField(
         max_length=200,
         unique=True,
-        verbose_name='слаг'
+        verbose_name='слаг',
+        validators=(validate_slug, )
     )
     color = ColorField(
         max_length=7,
@@ -33,6 +52,13 @@ class Tag(models.Model):
         unique=True,
         verbose_name='Цвет'
     )
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
+    def __str__(self):
+        return self.name
 
 
 class Recipe(models.Model):
@@ -57,12 +83,11 @@ class Recipe(models.Model):
     )
     image = models.ImageField(upload_to='media')
     text = models.TextField(verbose_name='Описание')
-    cooking_time = models.PositiveIntegerField(
+    cooking_time = models.PositiveBigIntegerField(
         verbose_name='Время приготовления',
         default=1,
         validators=[
-            MinValueValidator(1, 'Допустимы значения от 1 до 200'),
-            MaxValueValidator(200, 'Допустимы значения от 1 до 200')
+            MinValueValidator(1, 'Минимальное значение - 1'),
         ]
     )
     pub_date = models.DateTimeField(
@@ -70,22 +95,32 @@ class Recipe(models.Model):
         auto_now_add=True
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=('pub_date', ))
+        ]
+        ordering = ['-pub_date']
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+
+    def __str__(self):
+        return f'{self.name}, {self.author}'
+
 
 class Favorite(models.Model):
     user = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='favorites',
         verbose_name='Добавлено в избранное'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorites',
         verbose_name='Любимый рецепт'
     )
 
     class Meta:
+        default_related_name = 'favorites'
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
         constraints = [
@@ -103,12 +138,11 @@ class RecipeIngredient(models.Model):
         related_name='ingredients',
         verbose_name='Ингредиент'
     )
-    amount = models.PositiveIntegerField(
+    amount = models.PositiveBigIntegerField(
         verbose_name='Количество',
         default=1,
         validators=[
-            MinValueValidator(1, 'Допустимы значения от 1 до 2000'),
-            MaxValueValidator(2000, 'Допустимы значения от 1 до 2000')
+            MinValueValidator(1, 'Минимальное значение - 1'),
         ]
     )
     recipe = models.ForeignKey(
@@ -124,17 +158,16 @@ class Cart(models.Model):
     user = models.ForeignKey(
         FoodgramUser,
         on_delete=models.CASCADE,
-        related_name='shopping_carts',
         verbose_name='Добавлено в корзину'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='shopping_carts',
         verbose_name='Рецепт в корзине'
     )
 
     class Meta:
+        default_related_name = 'shopping_carts'
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'recipe'],

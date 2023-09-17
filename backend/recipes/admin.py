@@ -47,7 +47,7 @@ class RecipeAdmin(admin.ModelAdmin):
         tags = []
         for tag in recipe.tags.all():
             tags.append(tag.name)
-        return ' '.join(tags)
+        return ' | '.join(tags)
 
     @admin.display(description='В избранном')
     def favorite_count(self, obj):

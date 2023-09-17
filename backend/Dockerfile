@@ -8,11 +8,9 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
-WORKDIR /app/foodgram
+RUN python manage.py makemigrations 
 
-RUN python manage.py makemigrations users
-
-RUN python manage.py makemigrations recipes
+# RUN python manage.py makemigrations recipes
 
 RUN python manage.py collectstatic --no-input
 

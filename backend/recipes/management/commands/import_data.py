@@ -1,8 +1,9 @@
 import json
 
-from recipes.models import Ingredient, Tag
-from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.core.management.base import BaseCommand
+
+from recipes.models import Ingredient, Tag
 
 
 class Command(BaseCommand):
@@ -10,9 +11,11 @@ class Command(BaseCommand):
         with open(f'{settings.BASE_DIR}/data/ingredients.json', 'r') as file:
             ingredients = json.loads(file.read())
             Ingredient.objects.bulk_create(
-                Ingredient(**x) for x in ingredients)
+                Ingredient(**ingredient) for ingredient in ingredients)
+
         with open(f'{settings.BASE_DIR}/data/tags.json', 'r') as file:
             tags = json.loads(file.read())
             Tag.objects.bulk_create(
-                Tag(**x) for x in tags)
+                Tag(**tag) for tag in tags)
+
         self.stdout.write('Данные загружены')
