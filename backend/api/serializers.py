@@ -120,7 +120,10 @@ class FavoriteSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        return RecipeSimpleSerializer(instance.recipe, context=self.context).data
+        return RecipeSimpleSerializer(
+            instance.recipe,
+            context=self.context
+        ).data
 
 
 class CartSerializer(serializers.ModelSerializer):
