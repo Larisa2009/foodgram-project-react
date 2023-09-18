@@ -11,11 +11,11 @@ class FoodgramUser(AbstractUser):
     first_name = models.CharField(
         max_length=settings.FIRST_NAME_MAX_LENGTH,
         blank=False,
-    ) 
-    last_name = models.CharField( 
+    )
+    last_name = models.CharField(
         max_length=settings.LAST_NAME_MAX_LENGTH,
         blank=False,
-    ) 
+    )
     email = models.EmailField(
         max_length=settings.EMAIL_MAX_LENGTH,
         unique=True

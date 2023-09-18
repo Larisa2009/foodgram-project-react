@@ -94,11 +94,11 @@ class RecipeViewSet(ModelViewSet):
 
     def serializer_create(self, user_id, pk, serializer):
         serializer = serializer(
-                data={
-                    'user': user_id,
-                    'recipe': pk
-                }
-            )
+            data={
+                'user': user_id,
+                'recipe': pk
+            }
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
