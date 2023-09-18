@@ -40,12 +40,12 @@ docker compose up --build -d
 
 После успешного запуска контейнеров выполните миграции:
 ```bash
-docker compose exec backend python manage.py migrate
+docker exec backend python manage.py migrate
 ```
 
 Создайте суперпользователя (при необходимости):
 ```bash
-docker compose exec -it backend bash
+docker exec -it backend bash
 python3 manage.py createsuperuser
 ```
 
