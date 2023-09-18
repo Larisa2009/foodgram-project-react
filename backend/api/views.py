@@ -1,11 +1,4 @@
-from api.filters import IngredientFilter, RecipeFilter
-from api.paginators import PageNumberLimitPaginator
-from api.permissions import IsAuthAndIsAuthorOrReadOnly
-from api.serializers import (CartSerializer, FavoriteSerializer,
-                             IngredientSerializer, RecipeCreateSerializer,
-                             RecipeListSerializer, SubscribeSerializer,
-                             SubscriptionsSerializer, TagSerializer)
-from api.utils import serializer_create_delete
+
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
@@ -13,16 +6,22 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as UVS
 
-from recipes.models import (Cart, Favorite, Ingredient, Recipe,
-                            RecipeIngredient, Tag)
-
-from rest_framework import filters, mixins, status
+from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
+from api.filters import IngredientFilter, RecipeFilter
+from api.paginators import PageNumberLimitPaginator
+from api.permissions import IsAuthAndIsAuthorOrReadOnly
+from api.serializers import (CartSerializer, FavoriteSerializer,
+                             IngredientSerializer, RecipeCreateSerializer,
+                             RecipeListSerializer, SubscribeSerializer,
+                             SubscriptionsSerializer, TagSerializer)
+from recipes.models import (Cart, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, Tag)
 from users.models import Subscribe
 
 
@@ -33,7 +32,6 @@ class UserViewSet(UVS):
     queryset = FoodgramUser.objects.all()
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (AllowAny,)
-    lookup_fields = ('name', 'id')
     http_method_names = ['get', 'post', 'delete']
     pagination_class = PageNumberLimitPaginator
 
@@ -56,8 +54,11 @@ class UserViewSet(UVS):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        subscribe = Subscribe.objects.filter(user=user, author=author)
-        deleted, _ = subscribe.delete()
+        deleted, _ = Subscribe.objects.filter(
+            user=user,
+            author=author
+        ).delete()
+
         if not deleted:
             return Response(
                 {'errors': 'Вы не подписаны на данного пользователя'},
@@ -91,34 +92,58 @@ class RecipeViewSet(ModelViewSet):
             return RecipeListSerializer
         return RecipeCreateSerializer
 
+    def serializer_create(self, user_id, pk, serializer):
+        serializer = serializer(
+                data={
+                    'user': user_id,
+                    'recipe': pk
+                }
+            )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+
+    def serializer_delete(self, user_id, pk, model):
+        deleted, _ = model.objects.filter(
+            user=user_id,
+            recipe=pk
+        ).delete()
+        if not deleted:
+            return Response(
+                {'errors': 'Рецепт отсутствует в избранном'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated, ])
     def favorite(self, request, **kwargs):
         if request.method == 'POST':
-            response = serializer_create_delete(
+            return self.serializer_create(
                 request.user.id,
                 kwargs['pk'],
                 FavoriteSerializer
             )
-        else:
-            response = serializer_create_delete(
-                request.user.id,
-                kwargs['pk'],
-                model=Favorite
-            )
-        return response
+        return self.serializer_delete(
+            request.user.id,
+            kwargs['pk'],
+            Favorite
+        )
 
     @action(detail=False, methods=['get'],
             permission_classes=[IsAuthAndIsAuthorOrReadOnly])
     def download_shopping_cart(self, request):
         items = RecipeIngredient.objects.select_related(
             'recipe', 'ingredient'
-        ).filter(recipe__shopping_carts__user=request.user).all().values(
+        ).filter(recipe__shopping_carts__user=request.user).values(
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(
             total=Sum('amount')
-        ).order_by('-total')
+        ).order_by('ingredient__name')
         response = self.make_shoplist(items)
         return response
 
@@ -140,18 +165,16 @@ class RecipeViewSet(ModelViewSet):
             permission_classes=[IsAuthAndIsAuthorOrReadOnly])
     def shopping_cart(self, request, **kwargs):
         if request.method == 'POST':
-            response = serializer_create_delete(
+            return self.serializer_create(
                 request.user.id,
                 kwargs['pk'],
                 CartSerializer
             )
-        else:
-            response = serializer_create_delete(
-                request.user.id,
-                kwargs['pk'],
-                model=Cart
-            )
-        return response
+        return self.serializer_delete(
+            request.user.id,
+            kwargs['pk'],
+            Cart
+        )
 
 
 class IngredientViewSet(mixins.ListModelMixin,
@@ -160,8 +183,7 @@ class IngredientViewSet(mixins.ListModelMixin,
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
-    search_fields = ('^name',)
-    filter_backends = (filters.SearchFilter,)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
 
 

@@ -36,11 +36,9 @@ services:
   
 
   nginx:
-    build:
-      dockerfile: Dockerfile
+    image: nginx
     depends_on:
       - backend
-      - db
     ports:
       - "80:80"
     volumes:

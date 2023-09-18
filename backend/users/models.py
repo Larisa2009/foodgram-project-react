@@ -2,15 +2,20 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from users.validators import validate_username
-
 
 class FoodgramUser(AbstractUser):
     username = models.CharField(
         max_length=settings.USERNAME_MAX_LENGTH,
         unique=True,
-        validators=(validate_username, )
     )
+    first_name = models.CharField(
+        max_length=settings.FIRST_NAME_MAX_LENGTH,
+        blank=False,
+    ) 
+    last_name = models.CharField( 
+        max_length=settings.LAST_NAME_MAX_LENGTH,
+        blank=False,
+    ) 
     email = models.EmailField(
         max_length=settings.EMAIL_MAX_LENGTH,
         unique=True
@@ -47,4 +52,4 @@ class Subscribe(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.user.follower} - {self.user.following}'
+        return f'{self.user} - {self.author}'

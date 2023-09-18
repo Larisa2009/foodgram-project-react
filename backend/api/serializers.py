@@ -3,13 +3,12 @@ from django.db.transaction import atomic
 from djoser.serializers import UserCreateSerializer
 from drf_base64.fields import Base64ImageField
 
-from recipes.models import (Cart, Favorite, Ingredient, Recipe,
-                            RecipeIngredient, Tag)
-
 from rest_framework import serializers
 
+from api.mixins import SubscriptionMixin
+from recipes.models import (Cart, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, Tag)
 from users.models import Subscribe
-from api.utils import SubscriptionMixin
 
 
 FoodgramUser = get_user_model()
@@ -28,9 +27,6 @@ class UserGetSerializer(SubscriptionMixin, UserCreateSerializer):
             'is_subscribed'
         )
         model = FoodgramUser
-
-    def get_is_subscribed(self, obj):
-        return super().get_is_subscribed(obj)
 
 
 class RecipeSimpleSerializer(serializers.ModelSerializer):
@@ -62,9 +58,6 @@ class SubscriptionsSerializer(SubscriptionMixin, serializers.ModelSerializer):
             'recipes',
             'recipes_count'
         )
-
-    def get_is_subscribed(self, obj):
-        return super().get_is_subscribed(obj)
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
@@ -140,7 +133,10 @@ class CartSerializer(serializers.ModelSerializer):
         ]
 
     def to_representation(self, instance):
-        return RecipeSimpleSerializer(instance['recipe']).data
+        return RecipeSimpleSerializer(
+            instance.recipe,
+            context=self.context
+        ).data
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
@@ -182,21 +178,23 @@ class RecipeListSerializer(serializers.ModelSerializer):
         exclude = ('pub_date', )
 
     def get_is_favorited(self, obj):
+        context = self.context.get('request')
         return (
-            self.context.get('request')
-            and self.context['request'].user.is_authenticated
+            context
+            and context.user.is_authenticated
             and Favorite.objects.filter(
-                user=self.context['request'].user,
+                user=context.user,
                 recipe=obj
             ).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
+        context = self.context.get('request')
         return (
-            self.context.get('request')
-            and self.context['request'].user.is_authenticated
+            context
+            and context.user.is_authenticated
             and Cart.objects.filter(
-                user=self.context['request'].user,
+                user=context.user,
                 recipe=obj
             ).exists()
         )
@@ -282,13 +280,19 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         for ingredient in attrs['ingredients']:
             if ingredient not in ingredients:
                 ingredients.append(ingredient)
+            else:
+                raise serializers.ValidationError(
+                    'Ингредиенты не могут дублироваться'
+                )
         tags = []
         for tag in attrs['tags']:
             if tag not in tags:
                 tags.append(tag)
-        attrs['ingredients'] = ingredients
-        attrs['tags'] = tags
+            else:
+                raise serializers.ValidationError(
+                    'Теги не могут дублироваться'
+                )
         return attrs
 
     def to_representation(self, instance):
-        return RecipeListSerializer(instance).data
+        return RecipeListSerializer(instance, context=self.context).data

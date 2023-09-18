@@ -4,9 +4,6 @@ from django.contrib.auth.admin import UserAdmin
 from .models import Subscribe, FoodgramUser
 
 
-admin.site.register(Subscribe)
-
-
 @admin.register(FoodgramUser)
 class UserAdmin(UserAdmin):
     list_display = (
@@ -19,3 +16,9 @@ class UserAdmin(UserAdmin):
     )
     search_fields = ('username', 'email')
     list_filter = ('username', 'email')
+
+
+@admin.register(Subscribe)
+class SubscribeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'author', )
+    search_fields = ('user', 'author', )
