@@ -15,7 +15,6 @@ router.register('recipes', RecipeViewSet, basename='recipes')
 
 
 urlpatterns = [
-    path('', include(router.urls)),  # одним инклюдом не получается
-    path('', include('djoser.urls')),
+    path('', include(router.urls)),
     path('auth/', include('djoser.urls.authtoken')),
 ]

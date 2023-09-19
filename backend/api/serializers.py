@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.db.transaction import atomic
 from djoser.serializers import UserCreateSerializer
 from drf_base64.fields import Base64ImageField
-
 from rest_framework import serializers
 
 from api.mixins import SubscriptionMixin
@@ -178,23 +177,23 @@ class RecipeListSerializer(serializers.ModelSerializer):
         exclude = ('pub_date', )
 
     def get_is_favorited(self, obj):
-        context = self.context.get('request')
+        request = self.context.get('request')
         return (
-            context
-            and context.user.is_authenticated
+            request
+            and request.user.is_authenticated
             and Favorite.objects.filter(
-                user=context.user,
+                user=request.user,
                 recipe=obj
             ).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
-        context = self.context.get('request')
+        request = self.context.get('request')
         return (
-            context
-            and context.user.is_authenticated
+            request
+            and request.user.is_authenticated
             and Cart.objects.filter(
-                user=context.user,
+                user=request.user,
                 recipe=obj
             ).exists()
         )
@@ -212,7 +211,7 @@ class RecipeIngredientCreateSerializer(serializers.ModelSerializer):
         queryset=Ingredient.objects.all(),
     )
     amount = serializers.IntegerField(
-        max_value=2000,
+        max_value=32767,
         min_value=1
     )
 
@@ -226,7 +225,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientCreateSerializer(many=True)
     cooking_time = serializers.IntegerField(
         min_value=1,
-        max_value=2000
+        max_value=32767
     )
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
@@ -267,32 +266,30 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags)
         return super().update(recipe, validated_data)
 
-    def validate(self, attrs):
-        if not attrs['ingredients']:
+    def validate(self, data):
+        ingredients = data.get('ingredients')
+        if not ingredients:
             raise serializers.ValidationError(
                 'В рецепте не могут отсутствовать ингредиенты'
             )
-        if not attrs['tags']:
+        tags = data.get('tags')
+        if not tags:
             raise serializers.ValidationError(
                 'В рецепте не могут отсутствовать теги'
             )
-        ingredients = []
-        for ingredient in attrs['ingredients']:
+        validated_ingredients = []
+        for ingredient in ingredients:
             if ingredient not in ingredients:
-                ingredients.append(ingredient)
+                validated_ingredients.append(ingredient)
             else:
                 raise serializers.ValidationError(
                     'Ингредиенты не могут дублироваться'
                 )
-        tags = []
-        for tag in attrs['tags']:
-            if tag not in tags:
-                tags.append(tag)
-            else:
-                raise serializers.ValidationError(
-                    'Теги не могут дублироваться'
-                )
-        return attrs
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                'Теги не могут дублироваться'
+            )
+        return data
 
     def to_representation(self, instance):
         return RecipeListSerializer(instance, context=self.context).data

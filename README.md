@@ -70,3 +70,4 @@ docker exec backend python3 manage.py import_data
 * gunicorn
 
 ---
+https://github.com/Larisa2009
