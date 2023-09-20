@@ -8,7 +8,7 @@ class FoodgramUser(AbstractUser):
     username = models.CharField(
         max_length=settings.USERNAME_MAX_LENGTH,
         unique=True,
-        validators=(UnicodeUsernameValidator, )
+        validators=(UnicodeUsernameValidator(), )
     )
     first_name = models.CharField(
         max_length=settings.FIRST_NAME_MAX_LENGTH,

@@ -33,6 +33,11 @@ class UserViewSet(UVS):
     http_method_names = ['get', 'post', 'delete']
     pagination_class = PageNumberLimitPaginator
 
+    def get_permissions(self):
+        if self.action == 'me':
+            self.permission_classes = (IsAuthenticated, )
+        return super().get_permissions()
+
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=(IsAuthenticated,))
     def subscribe(self, request, **kwargs):

@@ -279,7 +279,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             )
         validated_ingredients = []
         for ingredient in ingredients:
-            if ingredient not in ingredients:
+            if ingredient not in validated_ingredients:
                 validated_ingredients.append(ingredient)
             else:
                 raise serializers.ValidationError(
