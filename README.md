@@ -27,12 +27,7 @@ ALLOWED_HOSTS='Список разрешенных хостов'
 ---
 ## Запуск в Docker-контейнерах
 
-Склонируйте проект:
-```bash
-git clone git@github.com:Larisa2009/foodgram-project-react.git
-```
-
-Перейдите в директорию "./infra/" и выполните команду:
+Склонируйте проект и перейдите в директорию "./infra/" и выполните команду:
 ```bash
 docker compose up --build -d
 ```
@@ -40,12 +35,12 @@ docker compose up --build -d
 
 После успешного запуска контейнеров выполните миграции:
 ```bash
-docker exec backend python3 manage.py migrate
+docker compose exec backend python3 manage.py migrate
 ```
 
 Создайте суперпользователя (при необходимости):
 ```bash
-docker exec -it backend bash
+docker compose exec -it backend bash
 python3 manage.py createsuperuser
 ```
 
@@ -55,7 +50,7 @@ python3 manage.py createsuperuser
 С проектом поставляются данные ингредиентов и тегов.  
 Заполнить базу можно выполнив следующую команду:
 ```bash
-docker exec backend python3 manage.py import_data
+docker compose exec backend python3 manage.py import_data
 ```
 
 ## Стек технологий
